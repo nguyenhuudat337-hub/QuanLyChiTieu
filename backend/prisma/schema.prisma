@@ -1,0 +1,59 @@
+
+//nơi mô tả cấu trúc database cho Prisma
+generator client {
+  provider = "prisma-client-js" //tạo ra công cụ để node.js có thể sử dụng database
+}
+
+datasource db {
+  //Database của tôi là PostgreSQL và thông tin kết nối nằm trong biến DATABASE_URL
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+//tạo bảng user
+model User {
+  //có 3 kiểu dữ liệu: String, @id tương đương PRIMARY KEY,  @default(uuid()): Prisma tự tạo UUID.
+  id         String     @id @default(uuid())
+  name       String
+  //@unique: không được trùng
+  email      String     @unique
+  password   String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  categories Category[] // 1 user có nhiều categories
+  expenses   Expense[] // tương tự cate
+}
+
+
+//tạo bảng category
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  type      String    // "income" hoặc "expense"
+  userId    String //ID của user sở hữu Category
+  
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade) // tạo quan hệ với bảng USER, userId tham chiếu tới id. Cascade Delete: Nếu User bị xóa → các Category thuộc User đó cũng bị xóa.
+  expenses  Expense[] //1 cate có nhiều cách chi tiêu
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, name]) //Một User không được có hai Category cùng tên
+}
+
+
+//tạo bảng Expense
+model Expense {
+  id          String   @id @default(uuid())
+  title       String
+  amount      Decimal  @db.Decimal(12, 2) // làm tròn: tổng 12 chữ nhưng 2 chữ số thập phân ở cuối
+  type        String   // "income" hoặc "expense"
+  date        DateTime @default(now())
+  note        String? // có thể có hoặc không
+  userId      String
+  categoryId  String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
