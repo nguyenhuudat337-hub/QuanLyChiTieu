@@ -1,29 +1,39 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import { BrowserRouter, Routes , Route ,Navigate} from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import Layout from './components/Layout'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import NotFound from './pages/NotFound'
-import Layout from './components/Layout'
-
-//ví dụ người dùng truy cập /login thì React phải hiển thị page: login
+import ProtectedRoute from './components/ProtectedRoute'
+import { useAuth } from './context/AuthContext'
+import Categories from './pages/Categories'
+import Transactions from './pages/Transactions'
 function App() {
+  const { user } = useAuth()
+
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login/>}/>
-        <Route path="/register" element={<Register/>}/>
-        {/* nếu route còn nào bên trong  được truy cập, hãy dùng layout làm khung bao bên ngoài */}
-        <Route element={<Layout/>}>
-          <Route path="/" element={<Dashboard/>}/> 
+        {/* Auth routes */}
+        <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
+        <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
+
+        {/* Protected routes */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/" element={<Dashboard />} />
         </Route>
-        <Route path="*" element={<NotFound/>}/>
+        <Route path="/categories" element={<Categories />} />
+        <Route path="/transactions" element={<Transactions />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   )
 }
 
-export default App //cho phép các file khác import App
+export default App
